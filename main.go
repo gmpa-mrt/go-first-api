@@ -22,10 +22,12 @@ type Todo struct {
 var collection *mongo.Collection
 
 func main() {
-	// Load environment file
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatal("Error loading .env file", err)
+	if os.Getenv("ENV") != "production" {
+		// Load environment file if not in production
+		err := godotenv.Load(".env")
+		if err != nil {
+			log.Fatal("Error loading .env file", err)
+		}
 	}
 
 	// Set DB url and connect it
@@ -53,6 +55,17 @@ func main() {
 	collection = client.Database("golang_db").Collection("todos")
 
 	app := fiber.New()
+
+	/*
+		app.Use(cors.New(cors.Config{
+			AllowOrigins: "http://localhost:5173",
+			AllowHeaders: "Origin,Content-type,Accept",
+		}))
+	*/
+
+	if os.Getenv("ENV") == "production" {
+		app.Static("/", "./client/dist")
+	}
 
 	app.Get("/api/todos", getTodos)
 	app.Post("/api/todos", createTodo)
